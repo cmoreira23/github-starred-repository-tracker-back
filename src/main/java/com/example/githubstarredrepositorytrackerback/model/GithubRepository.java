@@ -3,6 +3,7 @@ package com.example.githubstarredrepositorytrackerback.model;
 import java.io.Serializable;
 import java.util.Objects;
 
+import javax.persistence.CascadeType;
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
@@ -52,7 +53,7 @@ public class GithubRepository implements Serializable {
 	private String url;
 
 	@JoinColumn(name = "owner_id")
-	@ManyToOne
+	@ManyToOne(cascade = {CascadeType.ALL})	
 	private Owner owner;
 
 	/**

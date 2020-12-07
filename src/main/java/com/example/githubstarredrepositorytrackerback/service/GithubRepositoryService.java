@@ -72,7 +72,7 @@ public class GithubRepositoryService {
 	 */
 	public void save(final GithubRepository githubRepository) throws Exception {
 		try {
-			repository.save(githubRepository);
+			repository.saveAndFlush(githubRepository);
 		} catch (Exception e) {
 			log.error("Error trying to create or update GithubRepository with gitId: %d\\n Error --> %s\\n",
 					githubRepository.getGitId(), e);
@@ -146,10 +146,11 @@ public class GithubRepositoryService {
 		try {
 			Owner owner = ownerService.createOrUpdate(elements.getOwner());
 			GithubRepository githubRepository = elements;
+			githubRepository.setLanguage(elements.getLanguage().toLowerCase());
 			Boolean update = false;
 			GithubRepository githubRepositoryDB = getGithubRepositoryFromDB(elements, update, owner);
 
-			if ((githubRepositoryDB != null) || update)
+			if ((githubRepositoryDB == null) || update)
 				save(githubRepository);
 		} catch (Exception e) {
 			log.error("Error trying to create or update owner with gitId:" + elements.getGitId(), e);
@@ -184,7 +185,7 @@ public class GithubRepositoryService {
 	 */
 	private void prepareToUpdate(GithubRepository elements, Owner owner, GithubRepository githubRepository) {
 		githubRepository.setForksCount(elements.getForksCount());
-		githubRepository.setLanguage(elements.getLanguage().toLowerCase());
+		githubRepository.setLanguage(elements.getLanguage());
 		githubRepository.setName(elements.getName());
 		githubRepository.setOwner(owner);
 	}
@@ -241,7 +242,7 @@ public class GithubRepositoryService {
 	public void refreshGithubRepositories(final String language) throws Exception {
 		GithubRepositoryDTO repositoryDTO = new GithubRepositoryDTO();
 		Integer pageCount = 1;
-		while (repositoryDTO != null && pageCount < 4) {
+		while (repositoryDTO != null && pageCount <= 30) {
 			repositoryDTO = getGithubRepositoryFromGithubAPI(language, pageCount);
 			if (repositoryDTO != null) {
 				int hash = repositoryDTO.hashCode();
