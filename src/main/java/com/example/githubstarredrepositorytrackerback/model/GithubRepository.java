@@ -1,12 +1,17 @@
 package com.example.githubstarredrepositorytrackerback.model;
 
+import java.io.Serializable;
 import java.util.Objects;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
+import javax.persistence.Id;
 import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
@@ -16,9 +21,18 @@ import com.fasterxml.jackson.annotation.JsonProperty;
  */
 @Entity
 @JsonIgnoreProperties(ignoreUnknown = true)
-public class GithubRepository extends EntityModel {
+public class GithubRepository implements Serializable {
 
-	private static final long serialVersionUID = -5143483849331060563L;
+	private static final long serialVersionUID = 6624106349129096682L;
+
+	@Id
+	@GeneratedValue(strategy = GenerationType.AUTO)
+	@JsonIgnore
+	private Long id;
+
+	@Column(nullable = false)
+	@JsonProperty(value = "id")
+	private Long gitId;
 
 	@Column(nullable = false)
 	private String name;
@@ -60,7 +74,7 @@ public class GithubRepository extends EntityModel {
 	 */
 	public GithubRepository(final Long gitId, final String name, final Long forksCount, final String language,
 			final Long stargazersCount, final String url, final Owner owner) {
-		super(gitId);
+		this.setGitId(gitId);
 		this.setName(name);
 		this.setForksCount(forksCount);
 		this.setLanguage(language);
@@ -153,26 +167,43 @@ public class GithubRepository extends EntityModel {
 		this.owner = owner;
 	}
 
+	/**
+	 * @return the gitId {@link Long}
+	 */
+	public Long getGitId() {
+		return gitId;
+	}
+
+	/**
+	 * @param gitId the owner to set {@link Long}
+	 */
+	public void setGitId(Long gitId) {
+		this.gitId = gitId;
+	}
+
+	/**
+	 * @param id the owner to set {@link Long}
+	 */
+	public Long getId() {
+		return id;
+	}
+
 	@Override
 	public int hashCode() {
-		final int prime = 31;
-		int result = super.hashCode();
-		result = prime * result + Objects.hash(forksCount, language, name, owner, stargazersCount, url);
-		return result;
+		return Objects.hash(forksCount, gitId, language, name, owner, stargazersCount, url);
 	}
 
 	@Override
 	public boolean equals(Object obj) {
 		if (this == obj)
 			return true;
-		if (!super.equals(obj))
-			return false;
 		if (!(obj instanceof GithubRepository))
 			return false;
 		GithubRepository other = (GithubRepository) obj;
-		return Objects.equals(forksCount, other.forksCount) && Objects.equals(language, other.language)
-				&& Objects.equals(name, other.name) && Objects.equals(owner, other.owner)
-				&& Objects.equals(stargazersCount, other.stargazersCount) && Objects.equals(url, other.url);
+		return Objects.equals(forksCount, other.forksCount) && Objects.equals(gitId, other.gitId)
+				&& Objects.equals(language, other.language) && Objects.equals(name, other.name)
+				&& Objects.equals(owner, other.owner) && Objects.equals(stargazersCount, other.stargazersCount)
+				&& Objects.equals(url, other.url);
 	}
 
 }

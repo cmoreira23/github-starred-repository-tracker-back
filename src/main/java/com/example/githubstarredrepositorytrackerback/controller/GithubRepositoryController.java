@@ -10,6 +10,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.client.HttpClientErrorException;
 
 import com.example.githubstarredrepositorytrackerback.model.GithubRepository;
 import com.example.githubstarredrepositorytrackerback.model.GithubRepositoryEntryLog;
@@ -19,7 +20,7 @@ import com.example.githubstarredrepositorytrackerback.service.GithubRepositorySe
  * @author Camilla Cyrino
  *
  */
-@CrossOrigin(origins = "http://localhost:8081")
+@CrossOrigin(origins = "http://localhost:4200")
 @RestController
 @RequestMapping("/api")
 public class GithubRepositoryController {
@@ -43,11 +44,12 @@ public class GithubRepositoryController {
 	}
 
 	@GetMapping("/refresh")
-	public ResponseEntity<HttpStatus> refreshGithubRepositories(@RequestParam(required = true) String language,
-			@RequestParam(required = false) Integer page) {
+	public ResponseEntity<HttpStatus> refreshGithubRepositories(@RequestParam(required = true) String language) {
 		try {
-			service.refreshGithubRepositories(language, page);
+			service.refreshGithubRepositories(language);
 			return new ResponseEntity<>(HttpStatus.NO_CONTENT);
+		} catch (HttpClientErrorException e) {
+			return new ResponseEntity<>(HttpStatus.FORBIDDEN);
 		} catch (Exception e) {
 			return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
 		}

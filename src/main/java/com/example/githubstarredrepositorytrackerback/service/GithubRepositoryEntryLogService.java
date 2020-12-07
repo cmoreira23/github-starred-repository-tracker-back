@@ -23,6 +23,12 @@ public class GithubRepositoryEntryLogService {
 	@Autowired
 	GithubRepositoryEntryLogRepository repository;
 
+	/**
+	 * @param language
+	 * @param page
+	 * @param hash
+	 * @return
+	 */
 	public boolean isLogChanged(final String language, final Integer page, final int hash) {
 		GithubRepositoryEntryLog log = repository.findByLanguageAndPage(language, page);
 		if (log != null && (log.getHash() == hash)) {
@@ -31,6 +37,14 @@ public class GithubRepositoryEntryLogService {
 		return true;
 	}
 
+	/**
+	 * 
+	 * 
+	 * @param language
+	 * @param page
+	 * @param hash
+	 * @throws Exception
+	 */
 	public void saveOrUpdateLog(final String language, final Integer page, final int hash) throws Exception {
 		try {
 			GithubRepositoryEntryLog log = repository.findByLanguageAndPage(language, page);
@@ -49,6 +63,12 @@ public class GithubRepositoryEntryLogService {
 		}
 	}
 
+	/**
+	 * Returns all GithubRepositoryEntryLog
+	 * 
+	 * @return GithubRepositoryEntryLog
+	 *         {@link List}<{@link GithubRepositoryEntryLog}>
+	 */
 	public List<GithubRepositoryEntryLog> getAll() {
 		return repository.findAll();
 	}

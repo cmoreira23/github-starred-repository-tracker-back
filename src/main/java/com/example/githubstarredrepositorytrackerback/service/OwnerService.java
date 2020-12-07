@@ -44,13 +44,13 @@ public class OwnerService {
 	}
 
 	/**
-	 * Retrieves an Owner by its GitId.
+	 * Retrieves an Owner by its GitId. '
 	 * 
 	 * @param gitId {@link Long}
 	 * @return owner {@link Optional}<{@link Owner}>
 	 * @throws Exception {@link Exception}
 	 */
-	public Optional<Owner> getByGitId(final Long gitId) throws Exception {
+	public Owner getByGitId(final Long gitId) throws Exception {
 		return repository.findByGitId(gitId);
 	}
 
@@ -102,14 +102,14 @@ public class OwnerService {
 	 * @throws Exception {@link Exception}
 	 */
 	public Owner createOrUpdate(Owner owner) throws Exception {
-		Optional<Owner> ownerDB = getByGitId(owner.getGitId());
+		Owner ownerDB = getByGitId(owner.getGitId());
 		Boolean update = false;
-		if (ownerDB.isPresent())
-			update = isChanged(owner, ownerDB.get(), update);
-
-		if (update) {
-			prepareToUpdate(owner, ownerDB.get());
-			owner = save(ownerDB.get());
+		if (ownerDB != null) {
+			update = isChanged(owner, ownerDB, update);
+			if (update) {
+				prepareToUpdate(owner, ownerDB);
+				owner = save(ownerDB);
+			}
 		} else {
 			owner = save(owner);
 		}

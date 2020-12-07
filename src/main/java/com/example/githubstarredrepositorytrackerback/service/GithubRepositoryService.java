@@ -16,6 +16,7 @@ import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
 
 import com.example.githubstarredrepositorytrackerback.dto.GithubRepositoryDTO;
@@ -116,7 +117,7 @@ public class GithubRepositoryService {
 	 * @throws Exception {@link Exception}
 	 */
 	public List<GithubRepository> getAllByLanguage(final String language) throws Exception {
-		return repository.findByLanguage(language);
+		return repository.findByLanguage(language.toLowerCase());
 	}
 
 	/**
@@ -146,9 +147,9 @@ public class GithubRepositoryService {
 			Owner owner = ownerService.createOrUpdate(elements.getOwner());
 			GithubRepository githubRepository = elements;
 			Boolean update = false;
-			Optional<GithubRepository> githubRepositoryDB = getGithubRepositoryFromDB(elements, update, owner);
+			GithubRepository githubRepositoryDB = getGithubRepositoryFromDB(elements, update, owner);
 
-			if (githubRepositoryDB.isEmpty() || update)
+			if ((githubRepositoryDB != null) || update)
 				save(githubRepository);
 		} catch (Exception e) {
 			log.error("Error trying to create or update owner with gitId:" + elements.getGitId(), e);
@@ -163,11 +164,10 @@ public class GithubRepositoryService {
 	 * @param owner    {@link Owner}
 	 * @return githubRepository {@link Optional}<{@linkGithubRepository}>
 	 */
-	private Optional<GithubRepository> getGithubRepositoryFromDB(GithubRepository elements, Boolean update,
-			Owner owner) {
-		Optional<GithubRepository> githubRepositoryDB = repository.findByGitId(elements.getGitId());
-		if (githubRepositoryDB.isPresent()) {
-			GithubRepository githubRepository = githubRepositoryDB.get();
+	private GithubRepository getGithubRepositoryFromDB(GithubRepository elements, Boolean update, Owner owner) {
+		GithubRepository githubRepositoryDB = repository.findByGitId(elements.getGitId());
+		if (githubRepositoryDB != null) {
+			GithubRepository githubRepository = githubRepositoryDB;
 			update = isChanged(elements, githubRepository, update, owner);
 			if (update)
 				prepareToUpdate(elements, owner, githubRepository);
@@ -184,7 +184,7 @@ public class GithubRepositoryService {
 	 */
 	private void prepareToUpdate(GithubRepository elements, Owner owner, GithubRepository githubRepository) {
 		githubRepository.setForksCount(elements.getForksCount());
-		githubRepository.setLanguage(elements.getLanguage());
+		githubRepository.setLanguage(elements.getLanguage().toLowerCase());
 		githubRepository.setName(elements.getName());
 		githubRepository.setOwner(owner);
 	}
@@ -210,7 +210,7 @@ public class GithubRepositoryService {
 	 * @return {@link List}<{@linkGithubRepository}>
 	 */
 	private GithubRepositoryDTO getGithubRepositoryFromGithubAPI(final String language, final Integer page)
-			throws Exception {
+			throws HttpClientErrorException {
 		try {
 			RestTemplateBuilder builder = new RestTemplateBuilder();
 			builder.build();
@@ -226,9 +226,9 @@ public class GithubRepositoryService {
 			}
 			return response.getBody();
 
-		} catch (Exception e) {
+		} catch (HttpClientErrorException e) {
 			log.error("Error trying to consumes github API \\n  Error --->", e);
-			throw new Exception(e);
+			throw new HttpClientErrorException(HttpStatus.FORBIDDEN);
 		}
 	}
 
@@ -238,31 +238,37 @@ public class GithubRepositoryService {
 	 * @param language {@link String}
 	 * @throws Exception {@link Exception}
 	 */
-	public void refreshGithubRepositories(final String language, final Integer page) throws Exception {
+	public void refreshGithubRepositories(final String language) throws Exception {
 		GithubRepositoryDTO repositoryDTO = new GithubRepositoryDTO();
 		Integer pageCount = 1;
-		if (page != null)
-			pageCount = page;
-		do {
+		while (repositoryDTO != null && pageCount < 4) {
 			repositoryDTO = getGithubRepositoryFromGithubAPI(language, pageCount);
 			if (repositoryDTO != null) {
 				int hash = repositoryDTO.hashCode();
-				boolean update = entryLogService.isLogChanged(language, page, hash);
+				boolean update = entryLogService.isLogChanged(language, pageCount, hash);
 				if (update) {
 					getGithubRepositories(repositoryDTO);
 					entryLogService.saveOrUpdateLog(language, pageCount, hash);
 				}
 			}
 			pageCount++;
-		} while (repositoryDTO != null && pageCount == 2);
-
+		}
 	}
 
+	/**
+	 * @param repositoryDTO
+	 */
 	private void getGithubRepositories(GithubRepositoryDTO repositoryDTO) {
 		List<GithubRepository> githubRepositories = repositoryDTO.getGithubRepository();
 		githubRepositories.forEach(this::createOrUptadeGithubRepository);
 	}
 
+	/**
+	 * Returns all GithubRepositoryEntryLog
+	 * 
+	 * @return GithubRepositoryEntryLog
+	 *         {@link List}<{@link GithubRepositoryEntryLog}>
+	 */
 	public List<GithubRepositoryEntryLog> getGithubRepositoryLog() {
 		return entryLogService.getAll();
 	}

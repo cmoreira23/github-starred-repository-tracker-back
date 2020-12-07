@@ -1,10 +1,15 @@
 package com.example.githubstarredrepositorytrackerback.model;
 
+import java.io.Serializable;
 import java.util.Objects;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
+import javax.persistence.Id;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
@@ -14,9 +19,18 @@ import com.fasterxml.jackson.annotation.JsonProperty;
  */
 @Entity
 @JsonIgnoreProperties(ignoreUnknown = true)
-public class Owner extends EntityModel {
+public class Owner implements Serializable {
 
-	private static final long serialVersionUID = -3067992659049832804L;
+	private static final long serialVersionUID = -8907519037022270780L;
+
+	@Id
+	@GeneratedValue(strategy = GenerationType.AUTO)
+	@JsonIgnore
+	private Long id;
+
+	@Column(nullable = false)
+	@JsonProperty(value = "id")
+	private Long gitId;
 
 	@Column(nullable = false)
 	@JsonProperty(value = "login")
@@ -43,13 +57,16 @@ public class Owner extends EntityModel {
 	/**
 	 * Constructor with params
 	 * 
+	 * @param gitId  {@link Long}
+	 * @param name   {@link String}
 	 * @param avatar {@link String}
 	 * @param type   {@link String}
 	 * @param url    {@link String}
 	 */
-	public Owner(final Long gitId, final String avatar, final String type, final String url) {
-		super(gitId);
+	public Owner(final Long gitId, final String name, final String avatar, final String type, final String url) {
+		setGitId(gitId);
 		setAvatar(avatar);
+		setName(name);
 		setType(type);
 		setUrl(url);
 	}
@@ -110,25 +127,42 @@ public class Owner extends EntityModel {
 		this.url = url;
 	}
 
+	/**
+	 * @return the gitId {@link Long}
+	 */
+	public Long getGitId() {
+		return gitId;
+	}
+
+	/**
+	 * @param gitId the owner to set {@link Long}
+	 */
+	public void setGitId(Long gitId) {
+		this.gitId = gitId;
+	}
+
+	/**
+	 * @param id the owner to set {@link Long}
+	 */
+	public Long getId() {
+		return id;
+	}
+
 	@Override
 	public int hashCode() {
-		final int prime = 31;
-		int result = super.hashCode();
-		result = prime * result + Objects.hash(avatar, name, type, url);
-		return result;
+		return Objects.hash(avatar, gitId, name, type, url);
 	}
 
 	@Override
 	public boolean equals(Object obj) {
 		if (this == obj)
 			return true;
-		if (!super.equals(obj))
-			return false;
 		if (!(obj instanceof Owner))
 			return false;
 		Owner other = (Owner) obj;
-		return Objects.equals(avatar, other.avatar) && Objects.equals(name, other.name)
-				&& Objects.equals(type, other.type) && Objects.equals(url, other.url);
+		return Objects.equals(avatar, other.avatar) && Objects.equals(gitId, other.gitId)
+				&& Objects.equals(name, other.name) && Objects.equals(type, other.type)
+				&& Objects.equals(url, other.url);
 	}
 
 }
